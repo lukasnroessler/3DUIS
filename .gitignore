@@ -3,3 +3,8 @@
 *.npy
 *.pt
 *.txt
+*.pyc
+*.png
+*.pcd
+*.csv
+*.json

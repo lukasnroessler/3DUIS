@@ -8,9 +8,14 @@ model:
   checkpoint: checkpoints/lastepoch199_model_segment_contrast.pt
   checkpoint_key: model
 
+# data:
+#   dataset: SemanticKITTI
+#   path: ./Datasets/SemanticKITTI
+#   split: validation
+
 data:
-  dataset: SemanticKITTI
-  path: ./Datasets/SemanticKITTI
+  dataset: AnoVox
+  path: ./Datasets/AnoVox
   split: validation
 
 graphcut:
