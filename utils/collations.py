@@ -67,7 +67,6 @@ def point_set_to_coord_feats(point_set, labels, resolution, num_points, determin
     #         # for reproducibility we set the seed
     #     np.random.seed(42)
     #     mapping = np.random.choice(mapping, num_points, replace=False)
-
     return p_coord, p_feats, labels
 
 def collate_points_to_sparse_tensor(pi_coord, pi_feats, pj_coord, pj_feats):
@@ -113,3 +112,34 @@ class SparseCollation:
                     'scan_file': batch_data['scan_file']}
 
 
+class AnoVoxCollation:
+    def __init__(self, resolution, num_points, instance_labels='gt'):
+        self.resolution = resolution
+        self.num_points = num_points
+        self.instance_labels = instance_labels
+
+    def __call__(self, list_data):
+        batch_data = list_data[0]#list(zip(*list_data))
+
+        points = batch_data['points_cluster']
+        sem_labels = batch_data['semantic_label']
+        # ins_labels = batch_data['instance_label']
+
+        p = np.asarray(points)
+
+        p_feats = []
+        p_coord = []
+        p_cluster = []
+        #for p in points:
+        # p[:,:-1] will be the points and intensity values, and the labels will be the cluster ids
+        coord_p, feats_p, cluster_p = point_set_to_coord_feats(p[:,:-1], p[:,-1], self.resolution, self.num_points)
+        p_coord.append(coord_p)
+        p_feats.append(feats_p)
+
+        p_feats = np.asarray(p_feats)
+        p_coord = np.asarray(p_coord)
+
+        segment = np.asarray(cluster_p)
+        # if not segment_contrast segment_i and segment_j will be an empty list
+        return {'coord': p_coord, 'feats': p_feats, 'cluster': segment, 'semantic_label': sem_labels, # 'instance_label': ins_labels if self.instance_labels == 'gt' else ins_labels,
+                    'scan_file': batch_data['scan_file']}

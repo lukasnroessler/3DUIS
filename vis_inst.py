@@ -3,9 +3,15 @@ import numpy as np
 from utils.corr_utils import crop_region
 import matplotlib.pyplot as plt
 
-pred = np.load('./output/3DUIS/08/raw_pred/000000.npy')
+pred = np.load('./output/3DUIS/Scenario_e9c61bb8-fe7e-4fde-8122-01e2181c0a62/raw_pred/PCD_748.npy')
+# pred = np.load('./output/3DUIS/08/raw_pred/000000.npy')
+# pred = np.load('./output/3DUIS/Scenario_f9903df8-9ca5-43c0-bf74-a3e5c1a72c11/raw_pred/PCD_156.npy')
+
+
 points = pred[:,:3]
-pred = pred[:,-1]
+pred = pred[:,-1]  
+print("size:", pred.size)
+print("size of npy where 0", (np.where(pred == 0)[0]).size) 
 
 pcd = o3d.geometry.PointCloud()
 pcd.points = o3d.utility.Vector3dVector(points)

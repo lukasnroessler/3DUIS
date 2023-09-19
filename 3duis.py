@@ -38,6 +38,7 @@ def instance_segmentation(params, labels, model):
         ground_labels = get_ground_labels(labels)
 
     for cluster in ins:
+        print("cluster: ", cluster)
         # instance with id 0 is the ground ignore this and instance with just few point
         cls_points = np.where(labels['cluster'] == cluster)[0]
         if cluster == 0 or len(cls_points) <= 5:
@@ -45,7 +46,6 @@ def instance_segmentation(params, labels, model):
         
         # get cluster
         cluster_center = c[cls_points].mean(axis=0)
-
         # crop a ROI around the cluster
         window_points = crop_region(c, labels['cluster'], cluster, params['graphcut']['roi_size'])
 
@@ -59,23 +59,19 @@ def instance_segmentation(params, labels, model):
 
         # build input only with the ROI points
         x_forward = numpy_to_sparse_tensor(c[window_points][np.newaxis, :, :], f[window_points][np.newaxis, :, :])
-
         # forward pass ROI 
         model.eval()
         x_forward.F.requires_grad = True
         out = model(x_forward.sparse())
         out = out.slice(x_forward)
-
         # reset grads to compute saliency
         x_forward.F.grad = None
 
         # compute saliency for the point in the center
         slc = get_cluster_saliency(x_forward, out, np.where(labels['cluster'][window_points] == cluster)[0])
         slc_ = slc.copy()
-
         # place the computed saliency into the full point cloud for comparison
         slc_full[window_points] = np.maximum(slc_full[window_points], slc)
-
         # build graph representation
         G = build_graph(out.F.detach().cpu().numpy(),
                         slc[:,np.newaxis],
@@ -88,7 +84,7 @@ def instance_segmentation(params, labels, model):
                     )
         # perform graph cut
         ins_points = graph_cut(G)
-
+        print("i like ya cut g")
         # create point-wise prediction matrix
         pred_ins = np.zeros((len(x_forward),)).astype(int)
         if len(ins_points) != 0:
@@ -130,11 +126,13 @@ def main(config):
     model.dropout = Identity()
 
     data_val = data_loaders[cfg['data']['dataset']](root=cfg['data']['path'], split=cfg['data']['split'])
-    val_loader = torch.utils.data.DataLoader(data_val, batch_size=1, collate_fn=SparseCollation(0.05, np.inf), shuffle=False, num_workers=10)
+    val_loader = torch.utils.data.DataLoader(data_val, batch_size=1, collate_fn=AnoVoxCollation(0.05, np.inf), shuffle=False, num_workers=10)
+    # val_loader = torch.utils.data.DataLoader(data_val, batch_size=1, collate_fn=SparseCollation(0.05, np.inf), shuffle=False, num_workers=10)
+
 
     data_iterator = iter(val_loader)
 
-    for batch_data in tqdm.tqdm(data_iterator):
+    for batch_data in tqdm.tqdm(data_iterator): # batch data is (N,5) pcd array
 
         coord = batch_data['feats'][0,:,:3]
         pred = instance_segmentation(cfg, batch_data, model)

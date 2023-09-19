@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from models.minkunet import MinkUNet
 from dataloader.SemanticKITTIDataLoader import SemanticKITTIDataLoader
+from dataloader.AnoVoxDataLoader import AnoVoxDataLoader
 import torch
 import MinkowskiEngine as ME
 
@@ -12,6 +13,7 @@ sparse_models = {
 
 data_loaders = {
     'SemanticKITTI': SemanticKITTIDataLoader,
+    'AnoVox': AnoVoxDataLoader,
 }
 
 color_map = {
